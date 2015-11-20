@@ -113,11 +113,11 @@ let v_sud g i j = match i,j with
 
 
 let v_est g i j = match i,j with
-  |i,0 -> g.(i).(Array.length g -1)
+  |i,j when j=Array.length g - 1 -> g.(i).(0)
   |i,j -> g.(i).(j+1);;
 
 let v_ouest g i j = match i,j with
-  |i,j when j=Array.length g -1  -> g.(i).(0)
+  |i,0 -> g.(i).(Array.length g - 1)
   |i,j -> g.(i).(j-1);;
 
 
@@ -159,8 +159,8 @@ let next_generation aut gen =
       list:= (verif_aut aut gen i j )::!list
     done;
   done;
-   list_to_Array (List.rev !list) (Array.length gen) ;;
-
+  (*list_to_Array (List.rev !list) (Array.length gen) ;;*)
+  make_gen (List.rev(!list)) gen 0 0 ;;
   
     
 
