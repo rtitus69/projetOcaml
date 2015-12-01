@@ -1,3 +1,5 @@
+open Graphics;;
+
 type state = D | A;;
 
 type generation = state array array;;
@@ -72,7 +74,7 @@ let stringState s = match s with
   |A -> "A"
   |D -> "D";;
 
-let show_generation (g:generation):unit=
+let show_generation (g:generation) x:unit=
   print_newline();
   for i=0 to (Array.length g)-1 do
     print_string(" ");
@@ -85,7 +87,6 @@ let show_generation (g:generation):unit=
     for j = 0 to Array.length g.(i) -1 do
       print_string(stringState g.(i).(j)^" | ");
     done;
-    
     print_newline();
   done;
   print_string(" ");
@@ -94,15 +95,46 @@ let show_generation (g:generation):unit=
     done;
   print_string("+");;
 
-
-
 let alpha:generation = [|[|D;D;A;D|];[|D;A;A;A|];[|D;D;A;D|];[|D;D;D;D|]|];;
 
-  Array.length alpha ;;
+open_graph(" 500x500");;
+
+let show_generation2 (g:generation) :unit=
+  set_window_title("Jeu De La Vie");
+  let l = (size_x())/ (Array.length g) in
+  for i=(Array.length g)-1 downto 0  do
+    for j=0 to (Array.length g)-1 do
+      if(g.(i).(j)=A)  then set_color blue
+      else set_color white;
+      fill_rect (i*l) (j*l) l l
+    done;
+  done;
+  set_color black;
+  let auxh n = 
+    for i = 1 to n do 
+      let space = ( size_y()) / n in
+      let y = space*i in
+      moveto 0 y ;
+      lineto (size_x()) y
+    done in
+  auxh (Array.length g);
+  let auxv n = 
+    for i=1 to n do 
+      let space = ( size_x()) / n in
+      let x = space*i in
+      moveto x 0 ;
+      lineto x (size_y())
+    done in
+  auxv (Array.length g);;
+
+show_generation2 alpha;;
+
+
+
+Array.length alpha ;;
 show_generation alpha ;;  
+(*show_generation c3;; *)
 
-
-show_generation c3;; 
 let v_nord g i j = match i,j with
   |0,j -> g.(Array.length g -1).(j)
   |i,j -> g.(i-1).(j);;
@@ -132,8 +164,8 @@ let verif_aut (aut:automaton)  g i j =
     |[] -> D
     |a::q -> if (verif_regle g a i j) then A else aux q in aux aut;;   
 
-  show_generation c3;;
-    verif_aut c2 c3 1 2 ;;
+  (*show_generation c3;;
+    verif_aut c2 c3 1 2 ;;*)
 let rec make_gen list gen n m = match n,m,list with
   |_,_,[] -> gen
   |_,m,a::q when m = Array.length gen -1 ->
@@ -165,8 +197,11 @@ let next_generation aut gen =
     
 
 let (c1,c2,c3) = a ;;
-  show_generation c3;;
-  let b = next_generation c2 c3 ;;
+
+show_generation c3;;
+
+let b = next_generation c2 c3 ;;
     
-    show_generation c3;;
-      show_generation b;;
+show_generation c3;;
+
+show_generation b;;
