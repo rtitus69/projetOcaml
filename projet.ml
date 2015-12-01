@@ -193,9 +193,7 @@ let next_generation aut gen =
   done;
   (*list_to_Array (List.rev !list) (Array.length gen) ;;*)
   make_gen (List.rev(!list)) gen 0 0 ;;
-  
     
-
 let (c1,c2,c3) = a ;;
 
 show_generation c3;;
@@ -205,3 +203,93 @@ let b = next_generation c2 c3 ;;
 show_generation c3;;
 
 show_generation b;;
+
+type formule = Vrai | Faux
+	       |Var of string
+	       |Neg of formule
+	       |Et of formule * formule
+	       |Ou of formule * formule;;
+
+let aut = [(D,D,D,D,A);(D,D,A,D,A);(A,D,D,D,A);(D,D,A,D,D);(D,A,D,D,D)];;
+
+(*n=[] au debut*)
+let rec d_vers_a aut n = match aut with 
+  |[]->n
+  |a::l->let (r1,r2,r3,r4,r5) = a in
+	 if(r5=D) then d_vers_a l (a::n)
+	 else  d_vers_a l n;;
+d_vers_a aut [];;
+
+(*l=[(AAAAA)] au debut*)
+(*let rec all_regle_a aut i l = 
+ match l with
+    |[]->[]
+    |a::q-> let b = a in
+	    let (r1,r2,r3,r4,r5) = b in
+	    let t = [|r1;r2;r3;r4;r5|] in
+	    t[i]=D;
+	    if(mem b aut) all_regle_a (all_regle_a q i l) (i+1) (a::l);;
+	    else all_regle_a (all_regle_a q i l) (i+1) (b::a::l);;*)
+ 
+
+let enleve l aut = 
+  let rec aux l1 aut l2 = match l1 with
+    |[] -> l2
+    |a::q -> if (List.mem a aut) then aux q aut l2 else aux q aut (a::l2) in
+  aux l aut [];;
+
+(*l=[(AAAAA)] au debut*)
+
+let all_regle_at =
+  let rec all_regle_a i l=
+    let rec all_regle_ab i l = 
+      if(i<=4) then 
+	match l with
+	|[]->[]
+	|a::q-> 
+      begin 
+	let (r1,r2,r3,r4,r5) = a in
+	let t = [|r1;r2;r3;r4;r5|] in
+	t.(i) <- D;
+	let m = (t.(0),t.(1),t.(2),t.(3),t.(4)) in
+	(all_regle_ab i q)@(m::a::[])
+      end
+      else l in
+  if(i<=3) then
+    all_regle_a (i+1) (all_regle_ab i l)
+  else l in
+  all_regle_a 0 [(A,A,A,A,A)];;
+
+let recupere_regle_a aut =
+  let rec all_regle_a i l=
+    let rec all_regle_ab i l = 
+      if(i<=4) then 
+	match l with
+	|[]->[]
+	|a::q-> 
+      begin 
+	let (r1,r2,r3,r4,r5) = a in
+	let t = [|r1;r2;r3;r4;r5|] in
+	t.(i) <- D;
+	let m = (t.(0),t.(1),t.(2),t.(3),t.(4)) in
+	(all_regle_ab i q)@(m::a::[])
+      end
+      else l in
+  if(i<=3) then
+    all_regle_a (i+1) (all_regle_ab i l)
+  else l in
+  enleve (all_regle_a 0 [(A,A,A,A,A)]) aut;;
+
+let rec descente_neg f = match f with
+  |Neg(g) -> begin match g with
+    |Neg(d) ->d
+    |Ou(g',d') -> descente_neg (Et(Neg(g'),Neg(d')))
+    |Et(g',d') -> descente_neg (Ou(Neg(g'), Neg(d'))) 
+    |g'-> Neg(g')
+  end
+  |Et(g,d) -> Et(descente_neg g, descente_neg d)
+  |Ou(g,d) -> Ou(descente_neg g, descente_neg d)
+  |_-> f;;
+A et B et C et D et E
+let g = Neg(Ou(Neg(Et(Var "a" , Var "b")),Neg(Et(Var"c",Var"d"))));;
+descente_neg g ;;
