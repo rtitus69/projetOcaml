@@ -213,24 +213,13 @@ type formule = Vrai | Faux
 let aut = [(D,D,D,D,A);(D,D,A,D,A);(A,D,D,D,A);(D,D,A,D,D);(D,A,D,D,D)];;
 
 (*n=[] au debut*)
-let rec d_vers_a aut n = match aut with 
+let rec d_vers_a aut n :rule list= match aut with 
   |[]->n
   |a::l->let (r1,r2,r3,r4,r5) = a in
 	 if(r5=D) then d_vers_a l (a::n)
 	 else  d_vers_a l n;;
-d_vers_a aut [];;
 
-(*l=[(AAAAA)] au debut*)
-(*let rec all_regle_a aut i l = 
- match l with
-    |[]->[]
-    |a::q-> let b = a in
-	    let (r1,r2,r3,r4,r5) = b in
-	    let t = [|r1;r2;r3;r4;r5|] in
-	    t[i]=D;
-	    if(mem b aut) all_regle_a (all_regle_a q i l) (i+1) (a::l);;
-	    else all_regle_a (all_regle_a q i l) (i+1) (b::a::l);;*)
- 
+d_vers_a aut [];;
 
 let enleve l aut = 
   let rec aux l1 aut l2 = match l1 with
@@ -239,7 +228,6 @@ let enleve l aut =
   aux l aut [];;
 
 (*l=[(AAAAA)] au debut*)
-
 let all_regle_at =
   let rec all_regle_a i l=
     let rec all_regle_ab i l = 
@@ -280,6 +268,17 @@ let recupere_regle_a aut =
   else l in
   enleve (all_regle_a 0 [(A,A,A,A,A)]) aut;;
 
+recupere_regle_a [];;
+(*let g = Neg(Ou(Neg(Et(Var "a" , Var "b")),Neg(Et(Var"c",Var"d"))));;
+descente_neg g ;;*)
+let neg f = match f with
+  |Neg(g) -> begin match g with
+    |Vrai->Faux
+    |Faux->Vrai
+    |_->Neg(g)
+  end
+  |_->f;;
+
 let rec descente_neg f = match f with
   |Neg(g) -> begin match g with
     |Neg(d) ->d
@@ -290,6 +289,44 @@ let rec descente_neg f = match f with
   |Et(g,d) -> Et(descente_neg g, descente_neg d)
   |Ou(g,d) -> Ou(descente_neg g, descente_neg d)
   |_-> f;;
-A et B et C et D et E
-let g = Neg(Ou(Neg(Et(Var "a" , Var "b")),Neg(Et(Var"c",Var"d"))));;
-descente_neg g ;;
+
+(*Traduit le passage de negation d'une regle plus la correspondance pour la variable donc A->D->neg xi si on a D->A->xi xi la var A ou D element de depart de la regle*)
+let neg s var =
+  if(s=A) then Neg(var) else var;;
+
+(*applique transforme aux deux liste de regle qui change letat: d_vers_a et recupere regle_a
+commence f a vrai*)
+let transforme (list:rule list) (t1:formule) (t2:formule) (t3:formule) (t4:formule) (t5:formule) :formule= 
+  let rec aux prem (f:formule) = match list with
+    |[]->f
+    |a::q->let (r1,r2,r3,r4,r5) =  a in
+	   if(prem=true) then transforme false q t1 t2 t3 t4 t5 (descente_neg((Ou((neg r1 t1),Ou((neg r2 t2),Ou((neg r3 t3),Ou((neg r4 t4),(neg r5 t5))))))))
+	   else transforme false q t1 t2 t3 t4 t5 (descente_neg((Et(f,Ou((neg r1 t1),Ou((neg r2 t2),Ou((neg r3 t3),Ou((neg r4 t4),(neg r5 t5))))))))); in
+  aux true Faux;;
+ 
+transforme ([(A, D, D, A, A); (A, D, D, D, A)]) (Var"p")  (Var"q")  (Var"s")  (Var"d")  (Var"e") ;;
+
+let stables (aut:automaton) t :formule=
+  let tab_var k = 
+    let f i j = Var ("x"^(string_of_int i)^(string_of_int j)) in
+    let t1 i = Array.init k (f i) in 
+    Array.init k t1 in
+  let variable = tab_var t in
+  let formule = ref Faux in
+  for i=0 to t-1 do
+    for j=0 to t-1 do
+      formule := Et(!formule,Et( (transforme (d_vers_a aut []) (v_nord variable i j) (v_ouest variable i j) (v_sud variable i j) (v_est variable i j) (variable.(i).(j))), (transforme (recupere_regle_a aut) (v_nord variable i j) (v_ouest variable i j) (v_sud variable i j) (v_est variable i j) (variable.(i).(j)))))
+    done;
+  done; 
+  !formule;;
+
+let aut = [(D, A, D, A, A); (D, A, D, D, A); (D, A, A, A, A); (D, A, A, D, A);
+ (D, D, D, A, A); (D, D, D, D, A); (D, D, A, A, A); (D, D, A, D, A);
+ (A, A, D, A, A); (A, A, D, D, A); (A, A, A, A, A); (A, A, A, D, A);
+ (A, D, D, A, A); (A, D, D, D, A)];;    
+stables aut 5;;
+
+
+
+
+
