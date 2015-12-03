@@ -1,4 +1,4 @@
-(*open Graphics*)
+open Graphics
 
 type state = D | A;;
 
@@ -103,9 +103,9 @@ let show_generation (g:generation):unit=
 
 let alpha:generation = [|[|D;D;A;D|];[|D;A;A;A|];[|D;D;A;D|];[|D;D;D;D|]|];;
 
-(*open_graph(" 500x500");;*)
+open_graph(" 500x500");;
 
-(*let show_generation2 (g:generation) :unit=
+let show_generation2 (g:generation) :unit=
   set_window_title("Jeu De La Vie");
   let l = (size_x())/ (Array.length g) in
   for i=(Array.length g)-1 downto 0  do
@@ -131,11 +131,9 @@ let alpha:generation = [|[|D;D;A;D|];[|D;A;A;A|];[|D;D;A;D|];[|D;D;D;D|]|];;
       moveto x 0 ;
       lineto x (size_y())
     done in
-  auxv (Array.length g);;*)
+  auxv (Array.length g);;
 
   (*show_generation2 alpha;;*)
-
-
 
 Array.length alpha ;;
 show_generation alpha ;;  
@@ -345,3 +343,13 @@ let aut = [(D, A, D, A, D); (D, A, D, D, A); (D, A, A, A, D); (D, A, A, D, A);
 	  (A, D, D, A, A); (A, D, D, D, D)];;
 
 let c = stables aut 5;;
+
+let beta = [|[|D; D; D; A; A|]; [|D; A; A; D; D|]; [|A; D; D; D; A|];
+    [|D; D; A; A; D|]; [|A; A; D; D; D|]|];;
+let rec interface aut gene_zero = 
+  show_generation2 gene_zero;
+  let etat = wait_next_event[Button_down] in
+  clear_graph();
+  interface aut (next_generation aut gene_zero);;
+
+  interface aut beta;;
