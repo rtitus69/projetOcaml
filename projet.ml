@@ -1,4 +1,4 @@
-open Graphics
+(*open Graphics*)
 
 type state = D | A;;
 
@@ -7,6 +7,12 @@ type generation = state array array;;
 type rule = state*state*state*state*state;;
 
 type automaton = rule list;;
+
+type formule = Vrai | Faux
+	       |Var of string
+	       |Neg of formule
+	       |Et of formule * formule
+	       |Ou of formule * formule;;
 
 let char_to_state c = 
   if(c='A') then A 
@@ -97,9 +103,9 @@ let show_generation (g:generation):unit=
 
 let alpha:generation = [|[|D;D;A;D|];[|D;A;A;A|];[|D;D;A;D|];[|D;D;D;D|]|];;
 
-open_graph(" 500x500");;
+(*open_graph(" 500x500");;*)
 
-let show_generation2 (g:generation) :unit=
+(*let show_generation2 (g:generation) :unit=
   set_window_title("Jeu De La Vie");
   let l = (size_x())/ (Array.length g) in
   for i=(Array.length g)-1 downto 0  do
@@ -125,9 +131,9 @@ let show_generation2 (g:generation) :unit=
       moveto x 0 ;
       lineto x (size_y())
     done in
-  auxv (Array.length g);;
+  auxv (Array.length g);;*)
 
-show_generation2 alpha;;
+  (*show_generation2 alpha;;*)
 
 
 
@@ -204,11 +210,7 @@ show_generation c3;;
 
 show_generation b;;
 
-type formule = Vrai | Faux
-	       |Var of string
-	       |Neg of formule
-	       |Et of formule * formule
-	       |Ou of formule * formule;;
+
 
 let aut = [(D,D,D,D,A);(D,D,A,D,A);(A,D,D,D,A);(D,D,A,D,D);(D,A,D,D,D)];;
 
@@ -304,9 +306,22 @@ let transforme (list:rule list) (t1:formule) (t2:formule) (t3:formule) (t4:formu
     |a::q->let (r1,r2,r3,r4,r5) =  a in
 	   if(prem=true) then aux false q t1 t2 t3 t4 t5 ((Ou((neg r1 t1),Ou((neg r2 t2),Ou((neg r3 t3),Ou((neg r4 t4),(neg r5 t5)))))))
 	   else aux false q t1 t2 t3 t4 t5 (Et(f,Ou((neg r1 t1),Ou((neg r2 t2),Ou((neg r3 t3),Ou((neg r4 t4),(neg r5 t5))))))); in
-  aux true (list:rule list) (t1:formule) (t2:formule) (t3:formule) (t4:formule) (t5:formule) Faux;;
+  aux true (list:rule list) (t1:formule) (t2:formule) (t3:formule) (t4:formule) (t5:formule) Vrai;;
  
-transforme ([(A, D, D, A, A); (A, D, D, D, A)]) (Var"p")  (Var"q")  (Var"s")  (Var"d")  (Var"e") ;;
+transforme ( [(D, A, D, A, A); (D, A, D, D, A); (D, A, A, A, A); (D, A, A, D, A);  (D, D, D, A, A); (D, D, D, D, A); (D, D, A, A, A); (D, D, A, D, A);
+	  (A, A, D, A, A); (A, A, D, D, A); (A, A, A, A, A); (A, A, A, D, A);
+	  (A, D, D, A, A); (A, D, D, D, A)]) (Var"p")  (Var"q")  (Var"s")  (Var"d")  (Var"e") ;;
+
+let simplifie_Vrai f =
+    let rec aux f = match f with
+      |Var s -> f
+      |Neg s -> f
+      |Ou(g,d) -> Ou( aux g, aux d)
+      |Et(Vrai,d) -> aux d
+      |Et(d,Vrai) -> aux d
+      |Et(g,d) -> Et( aux g, aux d)
+      |_-> f
+    in aux f ;;
 
 let stables (aut:automaton) t :formule=
   let tab_var k = 
@@ -314,21 +329,19 @@ let stables (aut:automaton) t :formule=
     let t1 i = Array.init k (f i) in 
     Array.init k t1 in
   let variable = tab_var t in
-  let formule = ref Faux in
+  let formule = ref Vrai in
   for i=0 to t-1 do
     for j=0 to t-1 do
-      formule := Et(!formule,Et( (transforme (d_vers_a aut []) (v_nord variable i j) (v_ouest variable i j) (v_sud variable i j) (v_est variable i j) (variable.(i).(j))), (transforme (recupere_regle_a aut) (v_nord variable i j) (v_ouest variable i j) (v_sud variable i j) (v_est variable i j) (variable.(i).(j)))))
+      match !formule with
+      |Vrai->formule := simplifie_Vrai (Et((transforme (d_vers_a aut []) (v_nord variable i j) (v_ouest variable i j) (v_sud variable i j) (v_est variable i j) (variable.(i).(j))), (transforme (recupere_regle_a aut) (v_nord variable i j) (v_ouest variable i j) (v_sud variable i j) (v_est variable i j) (variable.(i).(j)))))
+      |_->formule := simplifie_Vrai(Et(!formule,Et( (transforme (d_vers_a aut []) (v_nord variable i j) (v_ouest variable i j) (v_sud variable i j) (v_est variable i j) (variable.(i).(j))), (transforme (recupere_regle_a aut) (v_nord variable i j) (v_ouest variable i j) (v_sud variable i j) (v_est variable i j) (variable.(i).(j))))))
     done;
   done; 
   !formule;;
+  
+let aut = [(D, A, D, A, D); (D, A, D, D, A); (D, A, A, A, D); (D, A, A, D, A);
+	  (D, D, D, A, A); (D, D, D, D, D); (D, D, A, A, A); (D, D, A, D, D);
+	  (A, A, D, A, D); (A, A, D, D, A); (A, A, A, A, A); (A, A, A, D, A);
+	  (A, D, D, A, A); (A, D, D, D, D)];;
 
-let aut = [(D, A, D, A, A); (D, A, D, D, A); (D, A, A, A, A); (D, A, A, D, A);
- (D, D, D, A, A); (D, D, D, D, A); (D, D, A, A, A); (D, D, A, D, A);
- (A, A, D, A, A); (A, A, D, D, A); (A, A, A, A, A); (A, A, A, D, A);
- (A, D, D, A, A); (A, D, D, D, A)];;    
-stables aut 5;;
-
-
-
-
-
+let c = stables aut 5;;
