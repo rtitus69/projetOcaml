@@ -1,4 +1,4 @@
-open Graphics;;
+open Graphics
 
 type state = D | A;;
 
@@ -74,7 +74,7 @@ let stringState s = match s with
   |A -> "A"
   |D -> "D";;
 
-let show_generation (g:generation) x:unit=
+let show_generation (g:generation):unit=
   print_newline();
   for i=0 to (Array.length g)-1 do
     print_string(" ");
@@ -284,10 +284,12 @@ let rec descente_neg f = match f with
     |Neg(d) ->d
     |Ou(g',d') -> descente_neg (Et(Neg(g'),Neg(d')))
     |Et(g',d') -> descente_neg (Ou(Neg(g'), Neg(d'))) 
-    |g'-> Neg(g')
+    |g'-> descente_neg (Neg(g'))
   end
   |Et(g,d) -> Et(descente_neg g, descente_neg d)
   |Ou(g,d) -> Ou(descente_neg g, descente_neg d)
+  |Vrai -> Faux
+  |Faux -> Vrai
   |_-> f;;
 
 (*Traduit le passage de negation d'une regle plus la correspondance pour la variable donc A->D->neg xi si on a D->A->xi xi la var A ou D element de depart de la regle*)
@@ -297,18 +299,18 @@ let neg s var =
 (*applique transforme aux deux liste de regle qui change letat: d_vers_a et recupere regle_a
 commence f a vrai*)
 let transforme (list:rule list) (t1:formule) (t2:formule) (t3:formule) (t4:formule) (t5:formule) :formule= 
-  let rec aux prem (f:formule) = match list with
+  let rec aux prem (list:rule list) (t1:formule) (t2:formule) (t3:formule) (t4:formule) (t5:formule) (f:formule) = match list with
     |[]->f
     |a::q->let (r1,r2,r3,r4,r5) =  a in
-	   if(prem=true) then transforme false q t1 t2 t3 t4 t5 (descente_neg((Ou((neg r1 t1),Ou((neg r2 t2),Ou((neg r3 t3),Ou((neg r4 t4),(neg r5 t5))))))))
-	   else transforme false q t1 t2 t3 t4 t5 (descente_neg((Et(f,Ou((neg r1 t1),Ou((neg r2 t2),Ou((neg r3 t3),Ou((neg r4 t4),(neg r5 t5))))))))); in
-  aux true Faux;;
+	   if(prem=true) then aux false q t1 t2 t3 t4 t5 ((Ou((neg r1 t1),Ou((neg r2 t2),Ou((neg r3 t3),Ou((neg r4 t4),(neg r5 t5)))))))
+	   else aux false q t1 t2 t3 t4 t5 (Et(f,Ou((neg r1 t1),Ou((neg r2 t2),Ou((neg r3 t3),Ou((neg r4 t4),(neg r5 t5))))))); in
+  aux true (list:rule list) (t1:formule) (t2:formule) (t3:formule) (t4:formule) (t5:formule) Faux;;
  
 transforme ([(A, D, D, A, A); (A, D, D, D, A)]) (Var"p")  (Var"q")  (Var"s")  (Var"d")  (Var"e") ;;
 
 let stables (aut:automaton) t :formule=
   let tab_var k = 
-    let f i j = Var ("x"^(string_of_int i)^(string_of_int j)) in
+    let f i j = Var ("x"^(string_of_int (i+1))^(string_of_int (j+1))) in
     let t1 i = Array.init k (f i) in 
     Array.init k t1 in
   let variable = tab_var t in
