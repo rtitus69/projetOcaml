@@ -346,6 +346,7 @@ let c = stables aut 5;;
 
 let beta = [|[|D; D; D; A; A|]; [|D; A; A; D; D|]; [|A; D; D; D; A|];
     [|D; D; A; A; D|]; [|A; A; D; D; D|]|];;
+
 let rec interface aut gene_zero = 
   show_generation2 gene_zero;
   let etat = wait_next_event[Button_down] in
